@@ -14,7 +14,7 @@ for web users: this image:
 
 [🔗 stuaaaaaaaaaart.github.io/toys/badAppleEmote](about:blank)
 
-PAGE STILL BEING WRITTEN, TO BE UPDATES
+PAGE STILL BEING WRITTEN, TO BE UPDATED
 
 ## Brief Background
 
@@ -80,7 +80,7 @@ additional helper tools:
 ![BAD APPLE!!](badApple.gif)
 
 - 248 KB
-- variable framerates, nominally 12.5fps, fastest sectoions 16.66fps
+- variable framerates, nominally 12.5fps, fastest sections 16.66fps
 - 1999 frames total
 - 32px x 32px
 - 4-colour web palette
