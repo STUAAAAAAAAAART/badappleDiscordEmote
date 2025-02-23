@@ -12,9 +12,8 @@ for web users: this image:
 
 ## Full-er Explainer
 
-[🔗 stuaaaaaaaaaart.github.io/toys/badAppleEmote](about:blank)
+[🔗 https://stuaaaaaaaaaart.github.io/posts/toys/badAppleEmote.html](https://stuaaaaaaaaaart.github.io/posts/toys/badAppleEmote.html)
 
-PAGE STILL BEING WRITTEN, TO BE UPDATED
 
 ## Brief Background
 
