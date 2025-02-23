@@ -55,14 +55,14 @@ The new strategy, in abstract:
   - **future improvement**:
     - possibly luminance counting? object detection? this would be much easier working forward rather than backwards 
 - using the 100fps sequence: blend each section of frames together according to the cut file
-  - **implementation**: carried out the operation using python pillow image library and hold as list of `[PIL.image.image , frametime]`
+  - **implementation**: carried out the operation using python pillow image library and hold as list of `PIL.image.image` objects, along with a separate list of frametimes
 - export the list of images and frametimes into a GIF
-  - **implementation**: `PIL.image.save()`, with the same 3-colour palette
+  - **implementation**: `PIL.image.save()`
   - **considered**: saving individual frames and exporting to photoshop, but assigning frametimes per frame manually in the timeline editor would be a nightmare
 - import GIF into photoshop and compress using legacy save for web
   - **future improvement**:
     - carry this operation out programmatically in python, with a function estimating resultant filesize with what's currently generated for the export
-	- this is currently possible with static images, but more experimentation with PIL is needed with animated sequences, especially with GIFs
+	  - this is currently possible with static images, but more experimentation with PIL is needed with animated sequences, especially with GIFs
 
 additional helper tools:
 - `cutListInput.py` -> `cutFile.json`
@@ -88,7 +88,8 @@ additional helper tools:
 issues:
 
 - not great as a standalone large emote when used without text in chat. some fizzy edges but it's mostly from using the diffusion setting in the gradient solver in photoshop
-- due to lots of rounding, this emote plays a bit quicker
+- ~~due to lots of rounding, this emote plays a bit quicker~~
+  - 99.99% fixed! total frametimes lost to rounding is added back every time the running subtotal can make 0.01s worth of frametime to the actively processed GIF frame (you can probably sing to this now!)
 - a few hold and slow sections feel stuttery, although addressing it requires fighting the 2000 frame limit again
 
 # Questons asked by peers

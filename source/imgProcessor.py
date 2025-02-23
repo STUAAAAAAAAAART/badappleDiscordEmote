@@ -67,6 +67,8 @@ frametimeOverride ={
 
 thisSectionFrame100 = 0
 nextSectionFrame100 = 0
+frameTimeRoundingBin = 0.0
+pushRoundingFrametime = 0.0
 
 # read sequence: cutFile.json
 for fileKeys in keyCheck:
@@ -111,14 +113,23 @@ for fileKeys in keyCheck:
 				# check if next frame has enough remaining time to meet frametime limit 
 				testRemainingDurationRatio = realDuration / workingFrametime
 				if  testRemainingDurationRatio < 2.0: # there isn't enough
+					# get rounding clipoffs
+					roundDuration = round(realDuration, 2) # round to nearest 0.01s
+					frameTimeRoundingBin += realDuration - roundDuration
+					# if there's enough to make 0.01s, add it to the partials AFTER the partial frame evaluation later
+					if frameTimeRoundingBin > 0.01:
+						pushRoundingFrametime = 0.01
+						frameTimeRoundingBin -= 0.01
+					else:
+						pushRoundingFrametime = 0.0
+
 					if (testRemainingDurationRatio - 1.0 < 0.5) or (realDuration - workingFrametime < weldFrametime):
 					# if last frame is less than half of target frametime or weldFramerate threshold
 						# merge with this whole frame
-						realDuration = round(realDuration, 2) # round to nearest 0.01s
 						displayList.append([
 							getFrame100,
 							nextSectionFrame100,
-							realDuration, # whole frame + partial frame
+							realDuration + pushRoundingFrametime, # whole frame + partial frame
 							thisSectionBlendType
 							])
 						weldedFrames += 1
@@ -127,17 +138,16 @@ for fileKeys in keyCheck:
 						displayList.append([ # this whole frame
 							getFrame100,
 							nextFrame100,
-							thisSectionFrametime,
+							thisSectionFrametime, # whole frame
 							thisSectionBlendType
 							])
 						frameCounter += 1
 						getFrame100 = (countIndex + startFrame25)*4
 						realDuration -= workingFrametime
-						realDuration = round(realDuration,2) # round to nearest 0.01s
 						displayList.append([ # next partial frame
 							getFrame100,
 							nextSectionFrame100,
-							realDuration,
+							realDuration + pushRoundingFrametime, # partial frame
 							thisSectionBlendType
 							]) 
 						partialFrames += 1
