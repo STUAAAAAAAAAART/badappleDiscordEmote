@@ -41,42 +41,65 @@ frametimeOverride ={
 #	0.15 : 0.16,
 }
 
+frametimeFactor = 1.0 # factor = 1 / playbackSpeed; 2x speed = 0.5 factor
+
+frametimeOverride ={
+	0.05 : 0.09,
+	0.06 : 0.09,
+	0.07 : 0.09,
+	0.08 : 0.09,
+	0.09 : 0.1025,
+	0.1  : 0.11,
+	0.11 : 0.12,
+	0.12 : 0.14,
+	0.13 : 0.14,
+	0.14 : 0.16,
+#	0.15 : 0.16,
+}
+
+frametimeFactor = 0.5 # factor = 1 / playbackSpeed; 2x speed = 0.5 factor
+
 # read sequence: cutFile.json
 for fileKeys in keyCheck:
 	if "cut" in fileKeys:
 		if tempDict[fileKeys][2] == "hold": # this is a single hold frame
-			displayList.append([tempDict[fileKeys][0]*4 , round(tempDict[fileKeys][1]*0.04,2)]) # [100fps frame number , frame duration in seconds]
+			displayList.append( [
+				tempDict[fileKeys][0]*4 , # current frame
+				round(tempDict[fileKeys][1]*0.04, 2) * frametimeFactor # duration
+				] ) # [100fps frame number , frame duration in seconds]
 			frameCounter += 1
-		else: # this is a section of multiple frames
-			workingFrametime = tempDict[fileKeys][2] # get target frametime in key
-			if workingFrametime in frametimeOverride: # if there is a frametime override specified earlier above
-				# assign override frametime target
+			#print(f"GIF frames in {fileKeys}: 1")
+		else:
+			workingFrametime = tempDict[fileKeys][2] # thisSectionFrametime
+			if workingFrametime in frametimeOverride:
 				workingFrametime = frametimeOverride[workingFrametime]
-			
-			# get starting frame and evaluate real time duration
+
 			startFrame25 = tempDict[fileKeys][0] 
 			realDuration = tempDict[fileKeys][1] *0.04
 
-			# init loop
 			countIndex = 0
-			frameAdvance25 = workingFrametime * 25.0 # advance this number of cut frames (25fps) per loop
+			frameAdvance25 = workingFrametime / 0.04
 
-			while True: # for every export frame in this cut(in this case, just a preview)
+			targetFrametime = workingFrametime * frametimeFactor
+			recordFrametime = int(targetFrametime * 100) * 0.01
+			targetFrametimeLeftovers = targetFrametime - recordFrametime
+
+			while True:
 				frameCounter += 1
 				getFrame100 = int( round( (startFrame25 + (countIndex*frameAdvance25)) *4,0) )
 
 				# check if next frame has enough remaining time to meet frametime limit 
 				testRemainingDurationRatio = realDuration / workingFrametime
 				if  testRemainingDurationRatio < 2.0: # there isn't enough
-					if (testRemainingDurationRatio - 1.0 < 0.5) or (realDuration - workingFrametime < weldFrametime):
-					# if last frame is less than half of target frametime or weldFramerate threshold
+					if (testRemainingDurationRatio < 1.5) or (realDuration - workingFrametime < weldFrametime*frametimeFactor):
+					# if frame is less than half of target frametime or weldFramerate threshold
 						# merge with this whole frame
 						realDuration = round(realDuration,2) # round to nearest 0.01s
 						displayList.append([getFrame100 , realDuration])
 						weldedFrames += 1
 					else:
 						# make this whole frame and next partial frame now, and go to next cut
-						displayList.append([getFrame100 , workingFrametime])
+						displayList.append([getFrame100 , targetFrametime])
 						frameCounter += 1
 						getFrame100 = (countIndex + startFrame25)*4
 						realDuration -= workingFrametime
@@ -86,7 +109,7 @@ for fileKeys in keyCheck:
 					break
 				else:
 					# make this whole frame and loop
-					displayList.append([getFrame100 , workingFrametime])
+					displayList.append([getFrame100 , targetFrametime])
 				realDuration -= workingFrametime
 				countIndex += 1
 				continue

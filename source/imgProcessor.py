@@ -4,14 +4,14 @@ imgProcessor.py
 """
 
 
-import math as m
+# import math as m
 import json
 
 import os
 import numpy as np
 
 from PIL import Image as pim
-from PIL import ImageDraw as pdr
+# from PIL import ImageDraw as pdr
 from PIL import ImageChops as pch
 	# pip install --upgrade pillow
 
@@ -65,6 +65,26 @@ frametimeOverride ={
 #	0.15 : 0.16,
 }
 
+frametimeFactor = 1.0 # factor = 1 / playbackSpeed; 2x speed = 0.5 factor
+outputNameGIF = "badAppleBake.gif"
+
+frametimeOverride ={
+	0.05 : 0.09,
+	0.06 : 0.09,
+	0.07 : 0.09,
+	0.08 : 0.09,
+	0.09 : 0.1025,
+	0.1  : 0.11,
+	0.11 : 0.12,
+	0.12 : 0.14,
+	0.13 : 0.14,
+	0.14 : 0.16,
+#	0.15 : 0.16,
+}
+
+frametimeFactor = 0.5 # factor = 1 / playbackSpeed; 2x speed = 0.5 factor
+outputNameGIF = "badAppleBake2X.gif"
+
 thisSectionFrame100 = 0
 nextSectionFrame100 = 0
 frameTimeRoundingBin = 0.0
@@ -85,18 +105,18 @@ for fileKeys in keyCheck:
 			displayList.append( [
 				thisSectionFrame100,
 	 			"hold",
-				holdFrameDuration,
+				holdFrameDuration * frametimeFactor,
 		   		"none"
 				]
 			)
 			frameCounter += 1
 		else: # this is a section of multiple frames
 			# prepare loop to make multiple GIF frames
-			workingFrametime = tempDict[fileKeys][2] # get target frametime in key, seconds
+			workingFrametime = thisSectionFrametime # get target frametime in key, seconds
 			if workingFrametime in frametimeOverride: # if there is a frametime override specified earlier above
 				# assign override frametime target
 				workingFrametime = frametimeOverride[workingFrametime]
-			
+
 			# get starting frame and evaluate real time duration
 			startFrame25 = tempDict[fileKeys][0] 
 			realDuration = tempDict[fileKeys][1] *0.04 # seconds
@@ -105,10 +125,28 @@ for fileKeys in keyCheck:
 			countIndex = 0
 			frameAdvance25 = workingFrametime * 25.0 # advance this number of cut frames (25fps) per loop
 
+			targetFrametime = workingFrametime * frametimeFactor
+			recordFrametime = int(targetFrametime * 100) * 0.01
+			targetFrametimeLeftovers = targetFrametime - recordFrametime
+
+			# loop explainer:
+				# for each cut: get the duration of cut in seconds
+				# get current frame at elapsed time
+				# subtract frametime from duration
+				# repeat untill duration is less than 2 x frametime (< 2.0)
+					# round remaining duration down to nearest 0.01s, add the difference to rounding bin
+					# if last frame is less than half the target frametime, or under a frametime threshhold:
+						# make the previous frame the last frame and add the leftover frametime to it
+					# else make last frame with remaining frametime
+					# if rounding bin has enough to make 0.01s, take 0.01s and add to last frame's frametime
 			while True: # for every export frame in this cut(in this case, just a preview)
 				frameCounter += 1
 				getFrame100 = int( round( (startFrame25 + (countIndex * frameAdvance25)) *4,0) )
 				nextFrame100 = int( round( (startFrame25 + ((countIndex +1) * frameAdvance25)) *4,0) )
+
+				frameTimeRoundingBin += targetFrametimeLeftovers
+				
+				# reminder: realDuration has workingFrametime subtracted from every frame
 
 				# check if next frame has enough remaining time to meet frametime limit 
 				testRemainingDurationRatio = realDuration / workingFrametime
@@ -123,7 +161,7 @@ for fileKeys in keyCheck:
 					else:
 						pushRoundingFrametime = 0.0
 
-					if (testRemainingDurationRatio - 1.0 < 0.5) or (realDuration - workingFrametime < weldFrametime):
+					if (testRemainingDurationRatio - 1.0 < 0.5) or (realDuration - workingFrametime < weldFrametime*frametimeFactor):
 					# if last frame is less than half of target frametime or weldFramerate threshold
 						# merge with this whole frame
 						displayList.append([
@@ -138,7 +176,7 @@ for fileKeys in keyCheck:
 						displayList.append([ # this whole frame
 							getFrame100,
 							nextFrame100,
-							thisSectionFrametime, # whole frame
+							targetFrametime,
 							thisSectionBlendType
 							])
 						frameCounter += 1
@@ -147,7 +185,7 @@ for fileKeys in keyCheck:
 						displayList.append([ # next partial frame
 							getFrame100,
 							nextSectionFrame100,
-							realDuration + pushRoundingFrametime, # partial frame
+							realDuration + pushRoundingFrametime,
 							thisSectionBlendType
 							]) 
 						partialFrames += 1
@@ -157,7 +195,7 @@ for fileKeys in keyCheck:
 					displayList.append([
 							getFrame100,
 							nextFrame100,
-							thisSectionFrametime,
+							targetFrametime,
 							thisSectionBlendType
 							])
 				realDuration -= workingFrametime
