@@ -4,3 +4,4 @@ source/badapple_100fps/*
 !source/badapple_100fps/README.md
 ignore/*
 imgForPages/*
+.zed/settings.json
